@@ -34,18 +34,18 @@ pub fn getDescriptor(self: FieldInfo) ConstantPool.Utf8Info {
 }
 
 pub fn decode(constant_pool: *ConstantPool, allocator: std.mem.Allocator, reader: anytype) !FieldInfo {
-    var access_flags_u = try reader.readIntBig(u16);
-    var name_index = try reader.readIntBig(u16);
-    var descriptor_index = try reader.readIntBig(u16);
+    const access_flags_u = try reader.readInt(u16, std.builtin.Endian.big);
+    const name_index = try reader.readInt(u16, std.builtin.Endian.big);
+    const descriptor_index = try reader.readInt(u16, std.builtin.Endian.big);
 
-    // var att_count = try reader.readIntBig(u16);
+    // var att_count = try reader.readInt(u16, std.builtin.Endian.big);
     // var att = try std.ArrayList(AttributeInfo).initCapacity(allocator, att_count);
     // for (att.items) |*a| a.* = try AttributeInfo.decode(constant_pool, allocator, reader);
-    var attributes_length = try reader.readIntBig(u16);
+    var attributes_length = try reader.readInt(u16, std.builtin.Endian.big);
     var attributes_index: usize = 0;
     var attributes = std.ArrayList(AttributeInfo).init(allocator);
     while (attributes_index < attributes_length) : (attributes_index += 1) {
-        var decoded = try AttributeInfo.decode(constant_pool, allocator, reader);
+        const decoded = try AttributeInfo.decode(constant_pool, allocator, reader);
         if (decoded == .unknown) {
             attributes_length -= 1;
             continue;
@@ -89,7 +89,7 @@ pub fn encode(self: FieldInfo, writer: anytype) !void {
     try writer.writeIntBig(u16, self.name_index);
     try writer.writeIntBig(u16, self.descriptor_index);
 
-    try writer.writeIntBig(u16, @intCast(u16, self.attributes.items.len));
+    try writer.writeIntBig(u16, @intCast(self.attributes.items.len));
     for (self.attributes.items) |*att| try att.encode(writer);
 }
 
